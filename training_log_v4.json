@@ -1,0 +1,20 @@
+{
+  "loss": [
+    {
+      "epoch": 1,
+      "loss": -0.2210738383155153,
+      "seconds": 2300.275736093521
+    },
+    {
+      "epoch": 2,
+      "loss": -0.24948573905397645,
+      "seconds": 2290.9554228782654
+    }
+  ],
+  "n_samples": 11879,
+  "epochs": 2,
+  "encoder": "cointegrated/rubert-tiny2",
+  "started_at": 1790214055.3922172,
+  "version": "v4 (class-balanced)",
+  "finished_at": 1790218646.903093
+}

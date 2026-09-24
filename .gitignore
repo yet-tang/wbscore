@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+.env
+.env.local
+*.so
+
+# Distribution
+build/
+dist/
+*.egg
+
+# Test
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs
+*.log
+nohup.out
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Model checkpoints (126MB each, exceed GitHub's 100MB limit)
+# Download separately via scripts/fetch_weights.sh
+checkpoints/
+
+# API runtime data (regenerated on startup; not in version control)
+data/keys.json
+data/api_keys.json
+data/usage.jsonl
+data/card_cache.json
+
+# Heavy training data (kept local for reproducibility, not in repo)
+data/wb_real_products*.jsonl
+data/wb_real_products_detail.jsonl
+*.pt.bak

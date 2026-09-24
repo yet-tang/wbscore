@@ -1,0 +1,41 @@
+# Caddyfile for wbscore
+# Replace wbscore.example.com with your actual domain before deploying.
+# Caddy will auto-issue Let's Encrypt certs on first start.
+
+wbscore.example.com {
+    encode gzip zstd
+    reverse_proxy api:8080 {
+        # Pass through real client IP for rate limiting / logging
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+
+        # Timeouts: WB card.json fetch can take 3-5s; laya scoring 2-3s
+        transport http {
+            dial_timeout 10s
+            response_header_timeout 30s
+            read_timeout 30s
+            write_timeout 30s
+        }
+    }
+
+    # Cache static frontend assets aggressively
+    @assets path /app/*
+    header @assets Cache-Control "public, max-age=3600"
+
+    # Optional: rate limit per IP (50 req/s bursts)
+    # rate_limit {remote_addr} 50r/s
+
+    log {
+        output file /data/access.log {
+            roll_size 100mb
+            roll_keep 5
+        }
+    }
+}
+
+# Optional: redirect bare domain to www
+# http://wbscore.example.com {
+#     redir https://{host}{uri} permanent
+# }

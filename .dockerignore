@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Data (kept small in image; volume mount for runtime data)
+data/wb_real_products_detail.jsonl
+data/card_cache.json
+
+# Misc
+.DS_Store
+*.log
+nohup.out
+.env.local
+
+# This file itself
+.dockerignore

@@ -1,0 +1,51 @@
+# docker-compose.yml — wbscore API + Caddy reverse proxy
+# Production deployment with auto-renewing Let's Encrypt TLS.
+#
+# Usage:
+#   1. Edit Caddyfile: replace wbscore.example.com with your domain
+#   2. Point your domain's DNS A/AAAA record to this server's IP
+#   3. docker compose up -d
+#
+# Caddy will provision Let's Encrypt certificates automatically.
+
+services:
+  api:
+    build: .
+    container_name: wb-quality-api
+    expose:
+      - "8080"
+    environment:
+      - LOG_LEVEL=info
+      - PYTHONUNBUFFERED=1
+    volumes:
+      # Persist API keys + usage log across container restarts
+      - api-data:/app/data
+      # Persist model checkpoint cache (in case you swap weights via volume mount)
+      # - ./checkpoints:/app/checkpoints
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/v1/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s   # model load takes ~5-10s on cold start
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: wb-quality-caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  api-data:
+  caddy-data:
+  caddy-config:

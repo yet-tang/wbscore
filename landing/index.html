@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>wbscore — Wildberries Product Quality Scoring API</title>
+<meta name="description" content="Score any Wildberries product against 51 official quality rules. Returns 0-100 score plus which rules failed. Built for sellers, analysts, and ERP integrators.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0c;
+  --panel: #131318;
+  --border: #1f1f28;
+  --text: #e8e8ec;
+  --muted: #888896;
+  --accent: #cb11ab;     /* WB magenta */
+  --accent2: #6e3aff;    /* purple */
+  --success: #22c55e;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: var(--bg); color: var(--text); font-family: 'Inter', -apple-system, sans-serif; line-height: 1.5; }
+.container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+/* Header */
+header { padding: 24px 0; border-bottom: 1px solid var(--border); }
+.nav { display: flex; align-items: center; justify-content: space-between; }
+.logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 18px; }
+.logo-mark { width: 28px; height: 28px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 7px; display: grid; place-items: center; color: white; font-size: 14px; font-weight: 700; }
+.nav-links { display: flex; gap: 24px; font-size: 14px; color: var(--muted); }
+.nav-links a { color: var(--muted); text-decoration: none; }
+.nav-links a:hover { color: var(--text); }
+
+/* Hero */
+.hero { padding: 80px 0 60px; text-align: center; }
+.hero h1 { font-size: 56px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.05; margin-bottom: 20px; }
+.hero h1 .accent { background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.hero p.subtitle { font-size: 20px; color: var(--muted); max-width: 640px; margin: 0 auto 36px; }
+.cta-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.btn { display: inline-block; padding: 12px 24px; border-radius: 8px; font-weight: 500; text-decoration: none; font-size: 15px; transition: transform .15s; }
+.btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: white; }
+.btn-primary:hover { transform: translateY(-1px); }
+.btn-ghost { background: var(--panel); color: var(--text); border: 1px solid var(--border); }
+
+/* Code block */
+.code-wrap { margin: 36px auto 0; max-width: 760px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.code-tabs { display: flex; background: #0a0a0e; padding: 8px 12px; gap: 8px; border-bottom: 1px solid var(--border); }
+.code-tab { padding: 6px 12px; border-radius: 6px; font-size: 13px; color: var(--muted); cursor: pointer; }
+.code-tab.active { background: var(--border); color: var(--text); }
+.code { padding: 18px 22px; font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.65; color: #d4d4dc; white-space: pre; overflow-x: auto; }
+.code .k { color: #ff79c6; }   /* keyword */
+.code .s { color: #f1fa8c; }   /* string */
+.code .n { color: #bd93f9; }   /* number */
+.code .c { color: #6272a4; }   /* comment */
+
+/* Features */
+.features { padding: 60px 0; }
+.features h2 { font-size: 32px; text-align: center; margin-bottom: 48px; }
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.feature { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+.feature .icon { width: 36px; height: 36px; border-radius: 8px; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: grid; place-items: center; margin-bottom: 16px; font-size: 18px; }
+.feature h3 { font-size: 17px; margin-bottom: 8px; }
+.feature p { color: var(--muted); font-size: 14px; }
+
+/* Rules */
+.rules { padding: 60px 0; background: var(--panel); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.rules h2 { font-size: 32px; text-align: center; margin-bottom: 12px; }
+.rules p.lead { text-align: center; color: var(--muted); margin-bottom: 36px; }
+.rules-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.rule-cat { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+.rule-cat h4 { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+.rule-cat .count { font-size: 36px; font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.rule-cat p { color: var(--muted); font-size: 13px; margin-top: 6px; }
+
+/* Pricing */
+.pricing { padding: 60px 0; }
+.pricing h2 { font-size: 32px; text-align: center; margin-bottom: 12px; }
+.pricing p.lead { text-align: center; color: var(--muted); margin-bottom: 36px; }
+.pricing-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.tier { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+.tier.featured { border-color: var(--accent); background: linear-gradient(135deg, rgba(203,17,171,.05), rgba(110,58,255,.05)); }
+.tier h3 { font-size: 15px; color: var(--muted); margin-bottom: 4px; }
+.tier .price { font-size: 32px; font-weight: 700; }
+.tier .price small { font-size: 14px; color: var(--muted); font-weight: 400; }
+.tier ul { list-style: none; margin-top: 16px; font-size: 14px; color: var(--muted); }
+.tier ul li { padding: 6px 0; border-bottom: 1px solid var(--border); }
+.tier ul li:last-child { border: none; }
+.tier .btn { width: 100%; margin-top: 16px; text-align: center; }
+
+/* Footer */
+footer { padding: 40px 0; border-top: 1px solid var(--border); text-align: center; color: var(--muted); font-size: 13px; }
+
+/* Responsive */
+@media (max-width: 800px) {
+  .hero h1 { font-size: 36px; }
+  .grid, .rules-grid, .pricing-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container nav">
+    <div class="logo">
+      <span class="logo-mark">W</span>
+      <span>wbscore</span>
+    </div>
+    <nav class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#rules">51 rules</a>
+      <a href="#pricing">Pricing</a>
+      <a href="https://github.com/yourname/wbscore-api">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="container">
+    <h1>Score any <span class="accent">Wildberries</span><br>product in 200ms.</h1>
+    <p class="subtitle">One API call returns a 0-100 quality score plus which of the 51 platform rules fired. Built for sellers, analysts, and ERP integrators.</p>
+    <div class="cta-row">
+      <a href="#pricing" class="btn btn-primary">Get API key — free</a>
+      <a href="#demo" class="btn btn-ghost">View live demo</a>
+    </div>
+    <div class="code-wrap">
+      <div class="code-tabs">
+        <span class="code-tab active">cURL</span>
+        <span class="code-tab">Python</span>
+        <span class="code-tab">JS</span>
+      </div>
+<pre class="code"><span class="c"># Score a product by Wildberries article ID</span>
+curl -X POST https://api.wbscore.io/v1/score \
+  -H <span class="s">"Authorization: Bearer wb_live_..."</span> \
+  -d <span class="s">'{
+    "nm_id": 1317633378,
+    "name": "Платье вечернее праздничное миди больших размеров",
+    "description": "...",
+    "options": [{"name": "Состав", "value": "полиэстер 92%"}],
+    "photo_count": 26
+  }'</span>
+
+<span class="c"># Response</span>
+{
+  <span class="k">"score"</span>: <span class="n">95.0</span>,
+  <span class="k">"confidence"</span>: <span class="n">0.82</span>,
+  <span class="k">"triggered"</span>: [
+    { <span class="k">"code"</span>: <span class="s">"Message41_DescMinLen"</span>, <span class="k">"penalty"</span>: <span class="n">5</span> }
+  ],
+  <span class="k">"model_version"</span>: <span class="s">"laya-v1.0"</span>
+}</pre>
+    </div>
+  </div>
+</section>
+
+<section class="features" id="features">
+  <div class="container">
+    <h2>Why wbscore</h2>
+    <div class="grid">
+      <div class="feature">
+        <div class="icon">⚡</div>
+        <h3>URL → score</h3>
+        <p>Paste a wildberries.ru URL or nm_id. We fetch the listing and return a 0-100 score plus every rule that fired. ~5s end-to-end.</p>
+      </div>
+      <div class="feature">
+        <div class="icon">🎯</div>
+        <h3>54 official rules</h3>
+        <p>Covers WB's official quality program: image, title, characteristics, description. Each rule maps to a real penalty.</p>
+      </div>
+      <div class="feature">
+        <div class="icon">🇷🇺</div>
+        <h3>Russian-first</h3>
+        <p>Native handling of Cyrillic, composition fields (Состав: полиэстер 92%), gender markers, and Russian quality conventions.</p>
+      </div>
+      <div class="feature">
+        <div class="icon">📊</div>
+        <h3>Calibrated confidence</h3>
+        <p>Strictly-proper scoring rules — confidence values are directly thresholdable, not just heuristic.</p>
+      </div>
+      <div class="feature">
+        <div class="icon">🔌</div>
+        <h3>Drop-in REST</h3>
+        <p>Plain JSON over HTTP. Bearer-token auth. OpenAPI spec auto-generated. SDKs in Python, JS, Go (planned).</p>
+      </div>
+      <div class="feature">
+        <div class="icon">💸</div>
+        <h3>Pay per call</h3>
+        <p>Stripe metered billing. Free 100 calls/month. Pro tier $79/mo for 30K calls. No vendor lock-in.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="rules" id="rules">
+  <div class="container">
+    <h2>What's scored</h2>
+    <p class="lead">51 rules across 4 dimensions, each with a 3/5/15 point penalty</p>
+    <div class="rules-grid">
+      <div class="rule-cat">
+        <h4>Image</h4>
+        <div class="count">22</div>
+        <p>Photo count, white background, no watermark, model-on-image, etc.</p>
+      </div>
+      <div class="rule-cat">
+        <h4>Title</h4>
+        <div class="count">12</div>
+        <p>Length 5–60 chars, no ALL CAPS, no foreign language spam, brand naming.</p>
+      </div>
+      <div class="rule-cat">
+        <h4>Characteristics</h4>
+        <div class="count">8</div>
+        <p>Состав (composition), цвет/пол/размер filled, no nonsense values.</p>
+      </div>
+      <div class="rule-cat">
+        <h4>Description</h4>
+        <div class="count">9</div>
+        <p>≥200 chars, no external links, no phone numbers, structured layout.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="pricing" id="pricing">
+  <div class="container">
+    <h2>Pricing</h2>
+    <p class="lead">Start free. Upgrade when you outgrow it.</p>
+    <div class="pricing-grid">
+      <div class="tier">
+        <h3>Free</h3>
+        <div class="price">$0<small>/mo</small></div>
+        <ul>
+          <li>100 calls / month</li>
+          <li>No credit card</li>
+          <li>All 51 rules</li>
+          <li>Public docs</li>
+        </ul>
+        <a href="#" class="btn btn-ghost">Get started</a>
+      </div>
+      <div class="tier">
+        <h3>Starter</h3>
+        <div class="price">$19<small>/mo</small></div>
+        <ul>
+          <li>5,000 calls / month</li>
+          <li>Batch endpoint</li>
+          <li>Email support</li>
+          <li>Usage dashboard</li>
+        </ul>
+        <a href="#" class="btn btn-ghost">Subscribe</a>
+      </div>
+      <div class="tier featured">
+        <h3>Pro · Most popular</h3>
+        <div class="price">$79<small>/mo</small></div>
+        <ul>
+          <li>30,000 calls / month</li>
+          <li>Priority support</li>
+          <li>Custom rule weights</li>
+          <li>Webhook for changes</li>
+        </ul>
+        <a href="#" class="btn btn-primary">Subscribe</a>
+      </div>
+      <div class="tier">
+        <h3>Scale</h3>
+        <div class="price">$299<small>/mo</small></div>
+        <ul>
+          <li>200,000 calls / month</li>
+          <li>SLA + dedicated channel</li>
+          <li>On-prem option</li>
+          <li>Custom integrations</li>
+        </ul>
+        <a href="#" class="btn btn-ghost">Contact sales</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p>wbscore · Built on laya (ModernBERT-large) + Apache 2.0 · Open API docs at <a href="#" style="color:var(--accent)">api.wbscore.io/docs</a></p>
+    <p style="margin-top:8px;">© 2026 · Not affiliated with Wildberries</p>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,79 @@
+{
+  "bands": [
+    {
+      "vol_start": 1406,
+      "host": "basket-10.wbbasket.ru"
+    },
+    {
+      "vol_start": 1758,
+      "host": "basket-12.wbbasket.ru"
+    },
+    {
+      "vol_start": 2164,
+      "host": "basket-14.wbbasket.ru"
+    },
+    {
+      "vol_start": 2799,
+      "host": "basket-17.wbbasket.ru"
+    },
+    {
+      "vol_start": 3775,
+      "host": "basket-22.wbbasket.ru"
+    },
+    {
+      "vol_start": 4684,
+      "host": "basket-26.wbbasket.ru"
+    },
+    {
+      "vol_start": 6039,
+      "host": "basket-30.wbbasket.ru"
+    },
+    {
+      "vol_start": 7361,
+      "host": "basket-34.wbbasket.ru"
+    },
+    {
+      "vol_start": 8247,
+      "host": "basket-37.wbbasket.ru"
+    },
+    {
+      "vol_start": 9886,
+      "host": "basket-41.wbbasket.ru"
+    },
+    {
+      "vol_start": 10946,
+      "host": "basket-42.wbbasket.ru"
+    },
+    {
+      "vol_start": 11949,
+      "host": "basket-44.wbbasket.ru"
+    },
+    {
+      "vol_start": 12782,
+      "host": "basket-45.wbbasket.ru"
+    },
+    {
+      "vol_start": 13907,
+      "host": "basket-46.wbbasket.ru"
+    }
+  ],
+  "raw_mapping": {
+    "1406": "basket-10",
+    "1758": "basket-12",
+    "2164": "basket-14",
+    "2799": "basket-17",
+    "3775": "basket-22",
+    "4684": "basket-26",
+    "6039": "basket-30",
+    "7361": "basket-34",
+    "8247": "basket-37",
+    "9886": "basket-41",
+    "10946": "basket-42",
+    "11949": "basket-44",
+    "12782": "basket-45",
+    "13907": "basket-46"
+  },
+  "discovered_at": 1790009021.979085,
+  "sample_count": 32,
+  "found_count": 14
+}

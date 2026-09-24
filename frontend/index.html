@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>wbscore — WB 商品质量评分</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0c;
+  --panel: #131318;
+  --border: #1f1f28;
+  --text: #e8e8ec;
+  --muted: #888896;
+  --accent: #cb11ab;
+  --accent2: #6e3aff;
+  --good: #22c55e;
+  --mid: #eab308;
+  --bad: #ef4444;
+  --grad: linear-gradient(135deg, var(--accent), var(--accent2));
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  background: var(--bg); color: var(--text);
+  font-family: 'Inter', -apple-system, "PingFang SC", sans-serif;
+  line-height: 1.5; min-height: 100vh;
+}
+.container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+/* Header */
+header { padding: 24px 0; border-bottom: 1px solid var(--border); }
+.nav { display: flex; align-items: center; justify-content: space-between; }
+.logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 18px; }
+.logo-mark {
+  width: 28px; height: 28px; background: var(--grad);
+  border-radius: 7px; display: grid; place-items: center;
+  color: white; font-size: 14px; font-weight: 700;
+}
+.nav-links { display: flex; gap: 24px; font-size: 14px; color: var(--muted); }
+.nav-links a { color: var(--muted); text-decoration: none; cursor: pointer; }
+.nav-links a:hover { color: var(--text); }
+
+/* Hero — same as landing */
+.hero { padding: 48px 0 32px; text-align: center; }
+.hero h1 { font-size: 40px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 12px; }
+.hero h1 .accent { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.hero p.subtitle { font-size: 16px; color: var(--muted); max-width: 580px; margin: 0 auto 24px; }
+
+/* Input card */
+.input-card {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 12px; padding: 28px; margin-bottom: 24px;
+}
+.tabs { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
+.tab {
+  padding: 10px 16px; background: transparent; color: var(--muted);
+  border: none; border-bottom: 2px solid transparent;
+  cursor: pointer; font-size: 14px; font-weight: 500;
+}
+.tab.active { color: var(--text); border-bottom-color: var(--accent); }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+.input-row { display: flex; gap: 8px; }
+.input-row input, textarea {
+  flex: 1; background: var(--bg); border: 1px solid var(--border);
+  color: var(--text); padding: 14px 16px; border-radius: 8px;
+  font-size: 15px; font-family: 'JetBrains Mono', ui-monospace, monospace;
+  transition: border-color .15s;
+}
+.input-row input:focus, textarea:focus { outline: none; border-color: var(--accent); }
+.btn {
+  display: inline-block; padding: 14px 28px; border-radius: 8px;
+  font-weight: 500; font-size: 15px; text-decoration: none;
+  border: none; cursor: pointer; transition: transform .15s;
+  font-family: inherit;
+}
+.btn-primary { background: var(--grad); color: white; }
+.btn-primary:hover { transform: translateY(-1px); }
+.btn-primary:disabled { background: var(--muted); cursor: not-allowed; transform: none; }
+.btn-ghost { background: var(--panel); color: var(--text); border: 1px solid var(--border); }
+textarea { width: 100%; min-height: 140px; resize: vertical; }
+.input-hint { font-size: 13px; color: var(--muted); margin-top: 12px; }
+.input-hint code {
+  background: var(--bg); padding: 2px 8px; border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace; font-size: 12px;
+  border: 1px solid var(--border);
+}
+
+/* Result score card */
+#result { display: none; }
+#result.visible { display: block; }
+.score-card {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 12px; padding: 32px; margin-bottom: 16px;
+  display: grid; grid-template-columns: auto 1fr; gap: 32px;
+  align-items: center;
+}
+.score-circle {
+  width: 160px; height: 160px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 56px; font-weight: 700; flex-shrink: 0;
+  background: var(--bg); border: 3px solid;
+  position: relative;
+}
+.score-circle::after {
+  content: "/ 10";
+  position: absolute;
+  bottom: 32px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+}
+.score-circle.good { color: var(--good); border-color: var(--good); }
+.score-circle.mid  { color: var(--mid);  border-color: var(--mid); }
+.score-circle.bad  { color: var(--bad);  border-color: var(--bad); }
+.score-meta h2 { font-size: 22px; margin-bottom: 12px; }
+.score-meta .meta-row { display: flex; flex-wrap: wrap; gap: 24px; font-size: 14px; color: var(--muted); margin-bottom: 4px; }
+.score-meta .meta-row strong { color: var(--text); font-weight: 500; margin-left: 4px; }
+
+/* Sections */
+.section {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px; margin-bottom: 16px;
+}
+.section h3 {
+  font-size: 13px; color: var(--muted); text-transform: uppercase;
+  letter-spacing: 0.05em; margin-bottom: 16px; font-weight: 600;
+}
+
+/* Rule item */
+.rule-item {
+  display: flex; gap: 16px; align-items: center;
+  padding: 14px 16px; background: var(--bg); border-radius: 8px;
+  margin-bottom: 8px; border-left: 3px solid var(--bad);
+}
+.rule-item .penalty { color: var(--bad); font-weight: 700; flex-shrink: 0; min-width: 36px; font-size: 15px; }
+.rule-item .code { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); flex-shrink: 0; min-width: 200px; }
+.rule-item .msg { flex: 1; color: var(--text); font-size: 14px; }
+
+/* Recommendations */
+.rec-item {
+  display: flex; gap: 14px;
+  padding: 16px 18px;
+  background: linear-gradient(90deg, rgba(203,17,171,.06), rgba(110,58,255,.06));
+  border: 1px solid var(--border); border-radius: 8px;
+  margin-bottom: 10px;
+}
+.rec-item .priority {
+  background: var(--grad); color: white;
+  width: 28px; height: 28px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; flex-shrink: 0;
+}
+.rec-item .body { flex: 1; }
+.rec-item .body .cat {
+  font-size: 11px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.05em;
+  margin-bottom: 4px; font-weight: 600;
+}
+.rec-item .body .cat code { font-family: 'JetBrains Mono', monospace; color: var(--muted); }
+.rec-item .body .cat .penalty-tag {
+  background: rgba(239,68,68,.15); color: var(--bad);
+  padding: 1px 6px; border-radius: 3px; margin-left: 4px;
+}
+.rec-item .body .fix { color: var(--text); font-size: 15px; line-height: 1.55; }
+
+/* Batch table */
+.export-row { display: flex; gap: 8px; margin-bottom: 12px; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+td.score-cell { font-weight: 700; font-size: 16px; }
+td.score-cell.good { color: var(--good); }
+td.score-cell.mid { color: var(--mid); }
+td.score-cell.bad { color: var(--bad); }
+td code { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); }
+
+/* Error */
+.error {
+  background: rgba(239,68,68,.08); border: 1px solid var(--bad);
+  color: var(--bad); padding: 12px 16px; border-radius: 8px;
+  margin-bottom: 16px; font-size: 14px;
+}
+
+/* Spinner */
+.spinner {
+  display: inline-block; width: 14px; height: 14px;
+  border: 2px solid rgba(255,255,255,.3);
+  border-top-color: white; border-radius: 50%;
+  animation: spin .8s linear infinite;
+  vertical-align: middle; margin-right: 8px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Footer */
+footer { padding: 40px 0; border-top: 1px solid var(--border); text-align: center; color: var(--muted); font-size: 13px; margin-top: 40px; }
+footer code { font-family: 'JetBrains Mono', monospace; color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container nav">
+    <div class="logo">
+      <span class="logo-mark">W</span>
+      <span>wbscore</span>
+    </div>
+    <nav class="nav-links">
+      <a onclick="getKey()">🔑 API key</a>
+      <a href="/docs" target="_blank">API docs</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="container">
+    <h1>WB 商品 <span class="accent">质量评分</span><br>贴个 URL 就行</h1>
+    <p class="subtitle">输入 wildberries.ru 链接或 nm_id，自动拉取商品信息并对照 54 条 WB 官方质量规则打分。<br><span style="color:var(--muted);font-size:14px">满分为 10 分，与 WB 后台扣分表（IMG_8319-8323）对齐。</span></p>
+  </div>
+</section>
+
+<div class="container">
+
+  <div class="input-card">
+    <div class="tabs">
+      <button class="tab active" data-tab="single">单商品评分</button>
+      <button class="tab" data-tab="batch">批量评分</button>
+    </div>
+
+    <div class="tab-content active" id="tab-single">
+      <div class="input-row">
+        <input id="url-input" type="text" placeholder="https://www.wildberries.ru/catalog/1234567/detail.aspx" />
+        <button class="btn btn-primary" id="score-btn" onclick="scoreSingle()">评分</button>
+      </div>
+      <div class="input-hint">
+        试试 →
+        <code>https://www.wildberries.ru/catalog/1747767/detail.aspx</code>
+        或
+        <code>100000000</code>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-batch">
+      <textarea id="batch-input" placeholder="每行一个 URL 或 nm_id：
+https://www.wildberries.ru/catalog/1234567/detail.aspx
+1747767
+https://www.wildberries.ru/catalog/1234568/detail.aspx"></textarea>
+      <div class="export-row" style="margin-top:14px">
+        <button class="btn btn-primary" onclick="scoreBatch()">批量评分</button>
+        <button class="btn btn-ghost" id="export-btn" onclick="exportCSV()" style="display:none">导出 CSV</button>
+      </div>
+      <div class="input-hint">最多 20 个 / 批 · 每个商品约 5 秒</div>
+    </div>
+  </div>
+
+  <div id="error-area"></div>
+
+  <div id="result"></div>
+
+  <div id="batch-result" style="display:none">
+    <div class="section">
+      <h3>批量结果</h3>
+      <table id="batch-table">
+        <thead><tr><th>nm_id</th><th>输入</th><th>评分</th><th>触发</th><th>模型</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="container">
+    wb_quality · laya v3 · Apache 2.0 · 本地运行于 <code>localhost:8080</code>
+  </div>
+</footer>
+
+<script>
+const API = "http://localhost:8080/v1";
+let API_KEY = localStorage.getItem("wbscore_key") || "";
+let batchRows = [];
+
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+  document.querySelectorAll(".tab-content").forEach(x => x.classList.remove("active"));
+  t.classList.add("active");
+  document.getElementById("tab-" + t.dataset.tab).classList.add("active");
+}));
+
+async function getKey() {
+  const email = prompt("输入 email 创建免费 API key：");
+  if (!email) return;
+  const r = await fetch(`${API}/admin/keys?email=${encodeURIComponent(email)}`, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({tier:"free"})});
+  const j = await r.json();
+  if (j.api_key) {
+    API_KEY = j.api_key;
+    localStorage.setItem("wbscore_key", API_KEY);
+    alert("API key 已保存到浏览器：\n\n" + API_KEY);
+  } else {
+    alert("创建失败：" + JSON.stringify(j));
+  }
+}
+
+function scoreClass(score) {
+  // 0-10 scale (matches WB's tier convention per user requirement):
+  // >9.5 = green (excellent), ≥7 = yellow (acceptable), <7 = red (needs work)
+  if (score > 9.5) return "good";
+  if (score >= 7) return "mid";
+  return "bad";
+}
+
+function showError(msg) {
+  document.getElementById("error-area").innerHTML = `<div class="error">${msg}</div>`;
+  document.getElementById("result").classList.remove("visible");
+}
+function clearError() {
+  document.getElementById("error-area").innerHTML = "";
+}
+
+async function scoreSingle() {
+  const url = document.getElementById("url-input").value.trim();
+  if (!url) { showError("请输入 WB URL 或 nm_id"); return; }
+  if (!API_KEY) { showError("请先点右上角 🔑 获取 API key"); return; }
+  clearError();
+  document.getElementById("result").classList.remove("visible");
+  const btn = document.getElementById("score-btn");
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>评分中…';
+  try {
+    const r = await fetch(`${API}/score/by_url?url=${encodeURIComponent(url)}`, {headers:{"Authorization": `Bearer ${API_KEY}`}});
+    const j = await r.json();
+    if (!r.ok) { showError(`HTTP ${r.status}：${j.detail || JSON.stringify(j)}`); return; }
+    renderSingle(j);
+  } catch (e) {
+    showError("请求失败：" + e.message);
+  } finally {
+    btn.disabled = false; btn.innerHTML = "评分";
+  }
+}
+
+function renderSingle(j) {
+  const sc = scoreClass(j.score);
+  let html = `
+    <div class="score-card">
+      <div class="score-circle ${sc}">${j.score.toFixed(1)}</div>
+      <div class="score-meta">
+        <h2>${j.nm_id || '—'} · WB 商品质量评分</h2>
+        <div class="meta-row">
+          <span>置信度<strong>${(j.confidence * 100).toFixed(0)}%</strong></span>
+          <span>触发规则<strong>${j.fail_count}</strong></span>
+          <span>通过规则<strong>${j.pass_count}</strong></span>
+          <span>延迟<strong>${j.latency_ms}ms</strong></span>
+        </div>
+        <div class="meta-row">
+          <span>模型<strong>${j.model_version}</strong></span>
+        </div>
+      </div>
+    </div>
+  `;
+
+  if (j.triggered && j.triggered.length) {
+    html += `<div class="section"><h3>触发的规则（${j.triggered.length}）</h3>`;
+    for (const t of j.triggered) {
+      html += `
+        <div class="rule-item">
+          <div class="penalty">-${t.penalty}</div>
+          <div class="code">${t.code}</div>
+          <div class="msg">${t.message || ''}</div>
+        </div>
+      `;
+    }
+    html += `</div>`;
+  }
+
+  if (j.recommendations && j.recommendations.length) {
+    html += `<div class="section"><h3>改进建议（按扣分权重倒序）</h3>`;
+    j.recommendations.forEach((r, i) => {
+      html += `
+        <div class="rec-item">
+          <div class="priority">${i + 1}</div>
+          <div class="body">
+            <div class="cat">${r.category} · <code>${r.code}</code> <span class="penalty-tag">-${r.penalty}</span></div>
+            <div class="fix">${r.fix}</div>
+          </div>
+        </div>
+      `;
+    });
+    html += `</div>`;
+  }
+
+  document.getElementById("result").innerHTML = html;
+  document.getElementById("result").classList.add("visible");
+}
+
+async function scoreBatch() {
+  const lines = document.getElementById("batch-input").value.trim().split("\n").map(s => s.trim()).filter(Boolean);
+  if (!lines.length) { showError("请粘贴至少一个 URL"); return; }
+  if (lines.length > 20) { showError("一次最多 20 个"); return; }
+  if (!API_KEY) { showError("请先点右上角 🔑 获取 API key"); return; }
+  clearError();
+  document.getElementById("batch-result").style.display = "none";
+  document.getElementById("export-btn").style.display = "none";
+
+  const rows = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    try {
+      const r = await fetch(`${API}/score/by_url?url=${encodeURIComponent(line)}`, {headers:{"Authorization": `Bearer ${API_KEY}`}});
+      const j = await r.json();
+      if (r.ok) {
+        rows.push({
+          input: line,
+          nm_id: j.nm_id,
+          score: j.score,
+          rules: j.fail_count,
+          model: j.model_version
+        });
+      } else {
+        rows.push({input: line, nm_id: '-', score: 0, rules: 0, model: `错误: ${j.detail || r.status}`});
+      }
+    } catch (e) {
+      rows.push({input: line, nm_id: '-', score: 0, rules: 0, model: '请求失败'});
+    }
+  }
+  batchRows = rows;
+  renderBatch(rows);
+}
+
+function renderBatch(rows) {
+  const tbody = document.querySelector("#batch-table tbody");
+  tbody.innerHTML = "";
+  for (const r of rows) {
+    const sc = scoreClass(r.score);
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${r.nm_id}</td>
+      <td><code>${r.input.length > 50 ? r.input.slice(0, 50) + '...' : r.input}</code></td>
+      <td class="score-cell ${sc}">${r.score}</td>
+      <td>${r.rules}</td>
+      <td style="font-size:11px;color:var(--muted)">${r.model}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+  document.getElementById("batch-result").style.display = "block";
+  document.getElementById("export-btn").style.display = "inline-block";
+}
+
+function exportCSV() {
+  if (!batchRows.length) return;
+  const lines = ["nm_id,input,score,rules_hit,model"];
+  for (const r of batchRows) {
+    lines.push(`${r.nm_id},"${r.input}",${r.score},${r.rules},"${r.model}"`);
+  }
+  const csv = lines.join("\n");
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = `wbscore-batch-${Date.now()}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+if (API_KEY) console.log("Loaded saved API key");
+</script>
+</body>
+</html>

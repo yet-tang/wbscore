@@ -1,0 +1,572 @@
+{
+  "$schema": "WB 商品质量规则定义 - laya 评分引擎用",
+  "version": "2.0",
+  "source_doc": "WB Wiki + WB 商品卡错误码实时扣分表 (2026-08-24)",
+  "notes": "扣分值来自 IMG_8319-8323 实时扣分表;None 表示阻断级(不扣分但上架直接被拒)",
+  "rules": [
+    {
+      "code": "MessageTooSmallItem",
+      "surface": "Image",
+      "type": "noul",
+      "qid": "img_too_small",
+      "weight": -1.0,
+      "instructions_ru": "Товар на фотографии занимает слишком мало места, что затрудняет его рассмотрение.",
+      "instructions_zh": "商品在主图里占比太小,影响识别",
+      "criteria_keywords": ["main_image_area_ratio<0.5"]
+    },
+    {
+      "code": "MessageImgBadMultipleObjects",
+      "surface": "Image",
+      "type": "noul",
+      "qid": "img_multi_objects",
+      "weight": -1.5,
+      "instructions_ru": "На фотографии присутствует несколько товаров, что затрудняет идентификацию основного товара.",
+      "instructions_zh": "主图里有多个商品,主商品识别困难",
+      "criteria_keywords": ["detected_objects>=2"]
+    },
+    {
+      "code": "MessageCollage",
+      "surface": "Image",
+      "type": "noul",
+      "qid": "img_collage",
+      "weight": -1.5,
+      "instructions_ru": "Фотография представляет собой коллаж из нескольких изображений.",
+      "instructions_zh": "主图是拼图",
+      "criteria_keywords": ["detected_grid_pattern"]
+    },
+    {
+      "code": "MessageImgBadCrop",
+      "surface": "Image",
+      "type": "noul",
+      "qid": "img_cropped",
+      "weight": -1.5,
+      "instructions_ru": "Товар на фотографии обрезан краем кадра, из-за чего видна не вся его часть.",
+      "instructions_zh": "主图里商品被画面边缘裁切",
+      "criteria_keywords": ["object_extends_outside_frame"]
+    },
+    {
+      "code": "MessageMarketingText",
+      "surface": "Image",
+      "type": "noul",
+      "qid": "img_marketing_text",
+      "weight": -0.7,
+      "instructions_ru": "Фотография содержит маркетинговый текст из словаря маркетинговых текстов.",
+      "instructions_zh": "主图含营销词(скидка、распродажа、хит、подарок 等)",
+      "criteria_keywords": ["marketing_words_detected"]
+    },
+    {
+      "code": "MessageImgAISlopedText",
+      "surface": "Image",
+      "type": "noul",
+      "qid": "img_ai_sloped_text",
+      "weight": 0.0,
+      "instructions_ru": "На фото обнаружены криво сгенерированные или криво переведённые тексты, меняющие смысл, непонятные.",
+      "instructions_zh": "主图含 AI 生成或斜体/弯曲文字(规划中)",
+      "criteria_keywords": ["status:planned"]
+    },
+    {
+      "code": "MessageSubjectMismatch",
+      "surface": "Image",
+      "type": "noul",
+      "qid": "subject_mismatch",
+      "weight": -1.0,
+      "instructions_ru": "Товар на фото не соответствует выбранной категории.",
+      "instructions_zh": "主图与所选类目不符",
+      "criteria_keywords": ["image_subject_id!=card_subject_id"]
+    },
+    {
+      "code": "MessageImgDisturbing",
+      "surface": "Image",
+      "type": "noul",
+      "qid": "img_disturbing",
+      "weight": null,
+      "block": true,
+      "instructions_ru": "На фото присутствуют физиологические жидкости, повреждения на теле, запущенные состояния, деформации и аномалии на теле.",
+      "instructions_zh": "主图含有令人不适的生理内容",
+      "criteria_keywords": ["critical_disturbing_content"]
+    },
+    {
+      "code": "MessageBlur",
+      "surface": "Image",
+      "type": "noul",
+      "qid": "img_blur",
+      "weight": null,
+      "block": true,
+      "instructions_ru": "Фото заблюрено или тонировано поверх товара, что не позволяет его полноценно идентифицировать.",
+      "instructions_zh": "主图模糊或被马赛克覆盖商品",
+      "criteria_keywords": ["blur_score<threshold"]
+    },
+    {
+      "code": "MessageImgBadUntidy",
+      "surface": "Image",
+      "type": "noul",
+      "qid": "img_untidy",
+      "weight": 0.0,
+      "instructions_ru": "Товар на фотографии выглядит неопрятно (например, мятый или грязный).",
+      "instructions_zh": "主图商品看起来不整洁(脏/皱)",
+      "criteria_keywords": ["status:planned"]
+    },
+    {
+      "code": "MessageImgBadPackage",
+      "surface": "Image",
+      "type": "noul",
+      "qid": "img_in_package",
+      "weight": 0.0,
+      "instructions_ru": "Товар на фотографии показан в упаковке, что не позволяет рассмотреть его.",
+      "instructions_zh": "主图是商品在包装里",
+      "criteria_keywords": ["status:planned"]
+    },
+    {
+      "code": "MessageWatermark",
+      "surface": "Image",
+      "type": "noul",
+      "qid": "img_watermark",
+      "weight": -0.7,
+      "instructions_ru": "На фотографии товара обнаружены водяные знаки.",
+      "instructions_zh": "主图有水印",
+      "criteria_keywords": ["watermark_detected"]
+    },
+    {
+      "code": "MessageBackgroundToxic",
+      "surface": "Image",
+      "type": "noul",
+      "qid": "img_bg_toxic",
+      "weight": -0.7,
+      "instructions_ru": "Фон фотографии слишком яркий, что отвлекает внимание от товара.",
+      "instructions_zh": "主图背景过亮/花哨",
+      "criteria_keywords": ["bg_saturation>threshold"]
+    },
+    {
+      "code": "MessageImgBadAngle",
+      "surface": "Image",
+      "type": "noul",
+      "qid": "img_bad_angle",
+      "weight": 0.0,
+      "instructions_ru": "Товар сфотографирован под некорректным углом, например, перевёрнут или расположен горизонтально.",
+      "instructions_zh": "商品拍摄角度不规范(倒置/横置)",
+      "criteria_keywords": ["status:planned"]
+    },
+    {
+      "code": "MessageNotEnoughImgs",
+      "surface": "Image",
+      "type": "noul",
+      "qid": "img_too_few",
+      "weight": -0.5,
+      "instructions_ru": "Количество фотографий товара меньше 2.",
+      "instructions_zh": "商品图片数量少于 2 张",
+      "criteria_keywords": ["image_count<2"]
+    },
+    {
+      "code": "MessageHuman",
+      "surface": "Image",
+      "type": "noul",
+      "qid": "img_human_present",
+      "weight": -0.5,
+      "instructions_ru": "На фотографии присутствует человек, который мешает рассмотреть товар.",
+      "instructions_zh": "主图里有人,影响商品识别",
+      "criteria_keywords": ["human_detected"]
+    },
+    {
+      "code": "MessagePaintedMan",
+      "surface": "Image",
+      "type": "noul",
+      "qid": "img_painted_man",
+      "weight": 0.0,
+      "instructions_ru": "На фотографии присутствует манекен, на котором размещён товар.",
+      "instructions_zh": "主图有穿着服装的人体模型",
+      "criteria_keywords": ["status:active"]
+    },
+    {
+      "code": "MessageObjectToxic",
+      "surface": "Image",
+      "type": "noul",
+      "qid": "img_object_toxic",
+      "weight": 0.0,
+      "instructions_ru": "На фотографии товара обнаружены элементы токсичного цвета.",
+      "instructions_zh": "主图含警示色元素",
+      "criteria_keywords": ["status:dev"]
+    },
+    {
+      "code": "MessageImgBadText",
+      "surface": "Image",
+      "type": "noul",
+      "qid": "img_too_much_text",
+      "weight": 0.0,
+      "instructions_ru": "На фотографии присутствует текст, который занимает значительную часть кадра или перекрывает товар.",
+      "instructions_zh": "主图文字占比过大或遮挡商品",
+      "criteria_keywords": ["status:planned"]
+    },
+    {
+      "code": "MessageImgSameBackground",
+      "surface": "Image",
+      "type": "noul",
+      "qid": "img_bg_same_as_product",
+      "weight": 0.0,
+      "instructions_ru": "Товар сливается с фоном.",
+      "instructions_zh": "商品和背景颜色融合",
+      "criteria_keywords": ["status:planned"]
+    },
+    {
+      "code": "MessageFakeMediaButton",
+      "surface": "Image",
+      "type": "noul",
+      "qid": "img_fake_video_button",
+      "weight": 0.0,
+      "instructions_ru": "Наличие на фото иконки видеоплеера.",
+      "instructions_zh": "主图含假视频播放按钮",
+      "criteria_keywords": ["status:disabled"]
+    },
+    {
+      "code": "MessageImgBadBackground",
+      "surface": "Image",
+      "type": "noul",
+      "qid": "img_bg_distracting",
+      "weight": -0.5,
+      "instructions_ru": "Фон фотографии неоднородный или содержит лишние объекты, которые отвлекают внимание от товара.",
+      "instructions_zh": "主图背景杂乱有干扰物",
+      "criteria_keywords": ["bg_objects>=3"]
+    },
+    {
+      "code": "MessageImgBadResolution",
+      "surface": "Image",
+      "type": "noul",
+      "qid": "img_low_resolution",
+      "weight": 0.0,
+      "instructions_ru": "Разрешение фотографии ниже 900×1200 пикселей, что влияет на качество изображения.",
+      "instructions_zh": "主图分辨率低于 900x1200",
+      "criteria_keywords": ["status:planned", "resolution<900x1200"]
+    },
+    {
+      "code": "MessageTitleNMID",
+      "surface": "Title",
+      "type": "noul",
+      "qid": "title_contains_nmid",
+      "weight": -1.0,
+      "instructions_ru": "Название товара содержит цифровые коды, которые не допускаются.",
+      "instructions_zh": "标题包含不允许的数字编码",
+      "criteria_keywords": ["digit_codes_in_title"]
+    },
+    {
+      "code": "MessageTitleUpperWord",
+      "surface": "Title",
+      "type": "noul",
+      "qid": "title_all_caps_words",
+      "weight": -0.5,
+      "instructions_ru": "В названии товара есть слова, полностью написанные заглавными буквами, что не соответствует правилам.",
+      "instructions_zh": "标题有全大写英文单词",
+      "criteria_keywords": ["all_caps_token_count>0"]
+    },
+    {
+      "code": "MessageWordDuplicates",
+      "surface": "Title",
+      "type": "noul",
+      "qid": "title_word_duplicates",
+      "weight_apparel": -0.7,
+      "weight_non_apparel": -1.0,
+      "instructions_ru": "В названии товара повторяются одни и те же слова.",
+      "instructions_zh": "标题词重复",
+      "criteria_keywords": ["duplicate_word_in_title"]
+    },
+    {
+      "code": "MessageTitleMarketingText",
+      "surface": "Title",
+      "type": "noul",
+      "qid": "title_marketing_text",
+      "weight": 0.0,
+      "instructions_ru": "В названии товара найдены маркетинговые слова.",
+      "instructions_zh": "标题含营销词",
+      "criteria_keywords": ["marketing_words_in_title"]
+    },
+    {
+      "code": "MessageBadLength",
+      "surface": "Title",
+      "type": "noul",
+      "qid": "title_too_long",
+      "weight": -0.5,
+      "instructions_ru": "Название товара слишком длинное и превышает допустимый лимит.",
+      "instructions_zh": "标题长度超过 60 字符",
+      "criteria_keywords": ["title_char_count>60"]
+    },
+    {
+      "code": "MessageBadSeason",
+      "surface": "Title",
+      "type": "noul",
+      "qid": "title_too_many_seasons",
+      "weight": -0.5,
+      "instructions_ru": "В названии товара указано слишком много слов, связанных с сезонами (например, \"зима\", \"лето\").",
+      "instructions_zh": "标题含多个季节词",
+      "criteria_keywords": ["season_words>=2"]
+    },
+    {
+      "code": "MessageBrandDuplicated",
+      "surface": "Title",
+      "type": "noul",
+      "qid": "title_brand_duplicated",
+      "weight_apparel": -0.7,
+      "weight_non_apparel": -0.5,
+      "instructions_ru": "Название товара содержит название бренда, что избыточно.",
+      "instructions_zh": "标题重复了品牌名(品牌已在 Brend 字段)",
+      "criteria_keywords": ["brand_in_title"]
+    },
+    {
+      "code": "MessageExtraDetails",
+      "surface": "Title",
+      "type": "noul",
+      "qid": "title_extra_details",
+      "weight": -1.5,
+      "instructions_ru": "Название товара содержит слишком много описательных слов или символов, таких как запятые или слэши, что делает его перегруженным.",
+      "instructions_zh": "标题细节过多(逗号/斜线/说明文字堆砌)",
+      "criteria_keywords": ["punctuation_density>threshold"]
+    },
+    {
+      "code": "MessageGenderExist",
+      "surface": "Title",
+      "type": "noul",
+      "qid": "title_gender_field_redundant",
+      "weight_apparel": -1.0,
+      "weight_non_apparel": null,
+      "instructions_ru": "В названии товара указано слово, обозначающее пол (например, \"мужской\", \"женский\"), что не требуется.",
+      "instructions_zh": "标题含性别词(服装类目不需要)",
+      "criteria_keywords": ["gender_words_in_title", "subject_is_apparel"]
+    },
+    {
+      "code": "MessageNoTitle",
+      "surface": "Title",
+      "type": "noul",
+      "qid": "title_empty",
+      "weight": -2.5,
+      "instructions_ru": "Поле «Название» пустое.",
+      "instructions_zh": "标题为空",
+      "criteria_keywords": ["title_is_empty"]
+    },
+    {
+      "code": "MessageObsceneWord",
+      "surface": "Title",
+      "type": "noul",
+      "qid": "title_obscene",
+      "weight": -8.0,
+      "instructions_ru": "В тексте найдено слово из словаря нецензурных слов.",
+      "instructions_zh": "标题含粗俗/脏话词",
+      "criteria_keywords": ["obscene_dict_match"]
+    },
+    {
+      "code": "MessageAllLatin",
+      "surface": "Title",
+      "type": "noul",
+      "qid": "title_all_latin",
+      "weight": -1.5,
+      "instructions_ru": "Название товара написано только латинскими буквами, без использования кириллицы.",
+      "instructions_zh": "标题只用拉丁字母(无西里尔字母)",
+      "criteria_keywords": ["title_only_latin"]
+    },
+    {
+      "code": "MessageCharMarketingText",
+      "surface": "Title",
+      "type": "noul",
+      "qid": "title_char_marketing",
+      "weight": null,
+      "instructions_ru": "В названии товара указано слово, обозначающее пол.",
+      "instructions_zh": "标题含性别词",
+      "criteria_keywords": ["unverified"]
+    },
+    {
+      "code": "MessageMissingCharcs",
+      "surface": "Characteristics",
+      "type": "noul",
+      "qid": "charcs_missing_required_for_filter",
+      "weight": 0.0,
+      "instructions_ru": "проверяется заполненность полей, которые появляются в фильтрах в разрезе сабжета.",
+      "instructions_zh": "必填特征缺失(影响筛选可见性)",
+      "criteria_keywords": ["status:active"]
+    },
+    {
+      "code": "MessageBadCharcLength",
+      "surface": "Characteristics",
+      "type": "noul",
+      "qid": "charcs_text_too_long",
+      "weight": -1.5,
+      "instructions_ru": "Значения характеристик товара слишком длинные.",
+      "instructions_zh": "特征文本过长(单值 >200 字符)",
+      "criteria_keywords": ["charc_value_length>200"]
+    },
+    {
+      "code": "MessageBadPackSize",
+      "surface": "Characteristics",
+      "type": "noul",
+      "qid": "charcs_pack_size_missing",
+      "weight": 0.0,
+      "instructions_ru": "Один или более габаритов упаковки (длина, ширина, высота) равны нулю.",
+      "instructions_zh": "包装尺寸为零",
+      "criteria_keywords": ["status:active"]
+    },
+    {
+      "code": "MessageBadRUSize",
+      "surface": "Characteristics",
+      "type": "noul",
+      "qid": "charcs_russian_size_out_of_range",
+      "weight": 0.0,
+      "instructions_ru": "Указан размер одежды или обуви, который выходит за допустимые пределы.",
+      "instructions_zh": "俄尺码超出合理范围(应使用 44/46/48)",
+      "criteria_keywords": ["size_out_of_range"]
+    },
+    {
+      "code": "MessageCharcNMID",
+      "surface": "Characteristics",
+      "type": "noul",
+      "qid": "charcs_contains_nmid",
+      "weight": -1.5,
+      "instructions_ru": "В характеристиках товара указаны недопустимые цифровые коды.",
+      "instructions_zh": "特征含不允许的 NM ID/数字编码",
+      "criteria_keywords": ["digit_codes_in_charcs"]
+    },
+    {
+      "code": "MessageNoSubjName",
+      "surface": "Characteristics",
+      "type": "noul",
+      "qid": "charcs_subj_name_empty",
+      "weight": null,
+      "block": true,
+      "instructions_ru": "Поле названия категории товара пустое.",
+      "instructions_zh": "类目名称字段为空(阻断级)",
+      "criteria_keywords": ["subj_name_empty"]
+    },
+    {
+      "code": "MessageUpperCharc",
+      "surface": "Characteristics",
+      "type": "noul",
+      "qid": "charcs_all_caps",
+      "weight": -1.0,
+      "weight_partial": -0.5,
+      "instructions_ru": "Значения характеристик содержат слова, полностью написанные заглавными буквами.",
+      "instructions_zh": "特征值全大写(整值 -1.0, 部分 -0.5)",
+      "criteria_keywords": ["charcs_all_caps_count"]
+    },
+    {
+      "code": "MessageNeedKiz",
+      "surface": "Characteristics",
+      "type": "noul",
+      "qid": "charcs_kiz_required",
+      "weight": 0.0,
+      "instructions_ru": "Поле «ТН ВЭД» в карточке товара не заполнено.",
+      "instructions_zh": "必填字段 TN VED 缺失",
+      "criteria_keywords": ["status:active"]
+    },
+    {
+      "code": "MessageAnotherBrands",
+      "surface": "Description",
+      "type": "noul",
+      "qid": "desc_mentions_other_brands",
+      "weight_apparel": -2.0,
+      "weight_non_apparel": -1.5,
+      "instructions_ru": "В описании товара упоминаются бренды, отличные от указанного в карточке.",
+      "instructions_zh": "描述提及非自家品牌",
+      "criteria_keywords": ["other_brand_in_desc"]
+    },
+    {
+      "code": "MessageDescrNMID",
+      "surface": "Description",
+      "type": "noul",
+      "qid": "desc_contains_nmid",
+      "weight": -1.0,
+      "instructions_ru": "В описании товара указаны недопустимые цифровые коды.",
+      "instructions_zh": "描述含 NM ID/数字编码",
+      "criteria_keywords": ["digit_codes_in_desc"]
+    },
+    {
+      "code": "MessageDescrUpperWord",
+      "surface": "Description",
+      "type": "noul",
+      "qid": "desc_all_caps",
+      "weight_apparel": -3.0,
+      "weight_non_apparel": -0.5,
+      "instructions_ru": "В описании товара слишком много слов, написанных заглавными буквами.",
+      "instructions_zh": "描述大写词过多(服装按大写比例 -3/-0.5/-0;其他 -0.5)",
+      "criteria_keywords": ["desc_caps_ratio>0.45"]
+    },
+    {
+      "code": "MessageObsceneWord",
+      "surface": "Description",
+      "type": "noul",
+      "qid": "desc_obscene",
+      "weight": -8.0,
+      "instructions_ru": "В тексте найдено слово из словаря нецензурных слов.",
+      "instructions_zh": "描述含粗俗/脏话词",
+      "criteria_keywords": ["obscene_dict_match_desc"]
+    },
+    {
+      "code": "MessagePoorDescription",
+      "surface": "Description",
+      "type": "score",
+      "qid": "desc_quality",
+      "weight_empty_apparel": -4.0,
+      "weight_empty_non_apparel": -1.0,
+      "weight_poor_apparel": -2.0,
+      "weight_poor_non_apparel": -1.0,
+      "instructions_ru": "Описание товара слишком короткое или не содержит достаточно значимых слов.",
+      "instructions_zh": "描述太短或无意义内容",
+      "criteria_keywords": ["desc_word_count<threshold"]
+    },
+    {
+      "code": "MessageSizesDetected",
+      "surface": "Description",
+      "type": "noul",
+      "qid": "desc_too_many_sizes",
+      "weight_apparel": -0.7,
+      "weight_non_apparel": 0.0,
+      "instructions_ru": "В описании товара слишком много упоминаний размеров.",
+      "instructions_zh": "描述罗列尺码过多",
+      "criteria_keywords": ["size_count>threshold", "subject_is_apparel"]
+    },
+    {
+      "code": "MessageSpamPhrases",
+      "surface": "Description",
+      "type": "noul",
+      "qid": "desc_spam_phrases",
+      "weight": 0.0,
+      "instructions_ru": "В описании товара используются фразы, которые считаются нежелательными.",
+      "instructions_zh": "描述含垃圾营销短语",
+      "criteria_keywords": ["status:planned"]
+    },
+    {
+      "code": "MessageWrongBrandScope",
+      "surface": "Description",
+      "type": "noul",
+      "qid": "desc_brand_category_mismatch",
+      "weight": null,
+      "block": true,
+      "instructions_ru": "Указанный бренд не соответствует категории товара.",
+      "instructions_zh": "品牌与类目不符(阻断级)",
+      "criteria_keywords": ["brand_not_in_category_whitelist"]
+    },
+    {
+      "code": "MessageSubjectDuplicates",
+      "surface": "Description",
+      "type": "noul",
+      "qid": "desc_keyword_stuffing",
+      "weight": -0.3,
+      "instructions_ru": "В описании товара слишком часто повторяются слова, связанные с категорией товара.",
+      "instructions_zh": "描述关键词堆砌",
+      "criteria_keywords": ["top_word_freq>0.05"]
+    },
+    {
+      "code": "MessageBadSequence",
+      "surface": "Description",
+      "type": "noul",
+      "qid": "desc_assortment_colors",
+      "weight": 0.0,
+      "instructions_ru": "В описании товара слишком часто упоминаются слова, связанные с цветами, сезонами, личностями или активностями.",
+      "instructions_zh": "描述罗列颜色/季节/尺码过多",
+      "criteria_keywords": ["status:planned"]
+    }
+  ],
+  "summary": {
+    "total_rules": 51,
+    "by_surface": {"Image": 22, "Title": 12, "Characteristics": 8, "Description": 9},
+    "by_type": {"noul": 49, "score": 1, "choice": 0},
+    "by_qtype_distribution": {
+      "noul": "占绝对多数 — 每条规则对应一个二分类判断",
+      "score": "描述质量用 score 类型(1-5 等级)",
+      "综合分": "用 score 类型汇总 0-10 分,与 WB 内部扣分表对齐"
+    }
+  }
+}
