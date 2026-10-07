@@ -1,0 +1,15 @@
+{
+  "loss": [
+    {
+      "epoch": 1,
+      "loss": -0.21469492824146091,
+      "seconds": 30361.243428707123
+    }
+  ],
+  "n_samples": 11879,
+  "epochs": 1,
+  "encoder": "/Users/tangye/.minimax/sessions/mvs_7aaef5ff59364cf38aaca72ce15b849f/workspace/laya_checkpoints/multilingual/encoder",
+  "started_at": 1790997088.073345,
+  "version": "v5 (laya-multilingual 322M)",
+  "finished_at": 1791027450.97084
+}

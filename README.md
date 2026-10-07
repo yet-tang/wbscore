@@ -7,7 +7,7 @@ Score any Wildberries product against 54 official quality rules. Returns a 0-10 
 - **URL → score** in ~5s — paste a `wildberries.ru` link or `nm_id`
 - **0-10 scoring** aligned with WB's official scale
 - **Programmatic rules** as primary scorer (deterministic, auditable)
-- **laya v4 model** as validator for image rules only (can't hallucinate text violations)
+- **laya v5 model** (laya-multilingual 322M) as validator for image rules only
 - **Actionable recommendations** — for each triggered rule, what to fix in Chinese
 - **Single-page web UI** at `/app/` matching the landing page style
 
@@ -50,7 +50,7 @@ bash deploy.sh
    ↓
 [rule_checker.py] ← primary scorer (54 programmatic rules)
    ↓ union with high-confidence (p_pass < 0.35)
-[laya v4] ← Image rules only (text rules never overridden)
+[laya v5 (laya-multilingual 322M)] ← Image rules only (text rules never overridden)
 ```
 
 ### Why hybrid?
@@ -69,19 +69,20 @@ Earlier versions used the model as the primary scorer. The model confidently hal
 
 ## Model weights
 
-Not in git (126MB exceeds GitHub's 100MB limit). After clone:
+Not in git (~1.3GB exceeds GitHub's 100MB limit). After clone:
 
 ```bash
-bash scripts/fetch_weights.sh    # downloads v4 from HuggingFace
+bash scripts/fetch_weights.sh    # downloads v5 head + laya-multilingual encoder from HuggingFace
 # OR scp from your dev machine:
-#   scp checkpoints/wb_laya_v4/wb_laya.pt user@vps:/opt/wbscore/checkpoints/wb_laya_v4/
+#   scp checkpoints/wb_laya_v5/wb_laya.pt user@vps:/opt/wbscore/checkpoints/wb_laya_v5/
+#   scp -r laya_checkpoints/multilingual user@vps:/opt/wbscore/
 ```
 
 ## Tests
 
 - `e2e_test.py` — 30 assertions across 10 endpoints (HTTP layer)
 - `real_product_test.py` — 12 assertions on real WB products (functional accuracy)
-- `benchmark_laya_v4.py` — per-rule accuracy on training set
+- `benchmark_laya_v5.py` — per-rule accuracy: v5 (93.6%) vs v4 (87.2%)
 
 ```bash
 python e2e_test.py
@@ -105,7 +106,8 @@ python real_product_test.py
 | `recommend.py` | Actionable fix generator (Chinese) |
 | `wb_fetcher.py` | WB product fetcher (basket CDN + search API) |
 | `laya_engine.py` | DecisionModel + RLCD training framework |
-| `train_laya_v4.py` | v4 training script (class-balanced) |
+| `train_laya_v4.py` | v4 training script (class-balanced, rubert-tiny2) |
+| `train_laya_v5.py` | v5 training script (laya-multilingual 322M, current production) |
 | `frontend/index.html` | Single-page web UI |
 | `Dockerfile` + `docker-compose.yml` | Container deployment |
 | `Caddyfile` | Reverse proxy with auto-TLS |

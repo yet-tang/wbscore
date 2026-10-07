@@ -143,14 +143,40 @@ class DecisionModel(nn.Module):
                  n_act: int = 2, dropout: float = 0.1):
         super().__init__()
         from transformers import AutoModel, AutoConfig
-        try:
-            cfg = AutoConfig.from_pretrained(encoder_name)
-            self.encoder = AutoModel.from_pretrained(encoder_name)
-        except Exception:
-            # fallback: 任意可用的小型多语言 encoder
-            encoder_name = "xlm-roberta-base"
-            cfg = AutoConfig.from_pretrained(encoder_name)
-            self.encoder = AutoModel.from_pretrained(encoder_name)
+        # If encoder_name points to a local directory with safetensors, use it
+        # without making any HTTPS requests. This is critical when running
+        # offline with laya-multilingual weights already downloaded.
+        from pathlib import Path as _P
+        local_dir = _P(encoder_name)
+        if (local_dir / "config.json").exists():
+            cfg = AutoConfig.from_pretrained(str(local_dir), local_files_only=True)
+            # ModernBert's expected state_dict keys differ from the laya-multilingual
+            # safetensors file. Map them:
+            #   safetensors: encoder.embeddings.X, encoder.layers.{0...21}.X
+            #   transformers: embeddings.X, encoder.layer.{0}.X
+            from safetensors.torch import load_file
+            sd_file = local_dir / "model.safetensors"
+            sd = load_file(str(sd_file)) if sd_file.exists() else None
+            self.encoder = AutoModel.from_config(cfg)
+            if sd is not None:
+                mapped = {}
+                for k, v in sd.items():
+                    if not k.startswith("encoder."):
+                        continue
+                    # transformers expects keys WITHOUT the "encoder." prefix
+                    mapped[k[len("encoder."):]] = v
+                missing, unexpected = self.encoder.load_state_dict(mapped, strict=False)
+                print(f"  [laya_engine] loaded {len(mapped) - len(missing)}/{len(mapped)} encoder tensors")
+                if missing:
+                    print(f"  [laya_engine] missing: {len(missing)} (re-init as random)")
+        else:
+            try:
+                cfg = AutoConfig.from_pretrained(encoder_name)
+                self.encoder = AutoModel.from_pretrained(encoder_name)
+            except Exception:
+                encoder_name = "xlm-roberta-base"
+                cfg = AutoConfig.from_pretrained(encoder_name)
+                self.encoder = AutoModel.from_pretrained(encoder_name)
 
         d = self.encoder.config.hidden_size
         nhead = max(1, d // 64)

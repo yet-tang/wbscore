@@ -189,20 +189,62 @@ def main():
         })
 
     # Pick encoder: prefer local laya-multilingual if available
-    encoder_name = str(LAYA_LOCAL) if LAYA_LOCAL.exists() else DEFAULT_ENCODER
+    # Point at the encoder subdir which has config.json + (now copied) safetensors
+    encoder_name = str(LAYA_LOCAL / "encoder") if (LAYA_LOCAL / "encoder" / "config.json").exists() else (
+        str(LAYA_LOCAL) if (LAYA_LOCAL / "config.json").exists() else DEFAULT_ENCODER
+    )
     print(f"\nLoading encoder: {encoder_name}")
     if not LAYA_LOCAL.exists():
         print(f"  ⚠️  laya-multilingual not in {LAYA_LOCAL.parent}")
         print(f"      Will fall back to {DEFAULT_ENCODER} (will try to fetch)")
 
     sys.path.insert(0, str(WORKSPACE))
-    from laya_engine import DecisionModel, build_sequence, QTYPES
-    from transformers import AutoTokenizer
+    from laya_engine import DecisionModel, build_sequence, QTYPES, proper_reward
 
-    tokenizer = AutoTokenizer.from_pretrained(encoder_name)
-    if tokenizer.mask_token is None:
-        tokenizer.mask_token = "<mask>"
-        tokenizer.mask_token_id = tokenizer.convert_tokens_to_ids("<mask>")
+    # Use tokenizers library directly (AutoTokenizer fails on this format in transformers 5.x)
+    if LAYA_LOCAL.exists():
+        from tokenizers import Tokenizer as HFTokenizer
+        _raw = HFTokenizer.from_file(str(LAYA_LOCAL / "tokenizer" / "tokenizer.json"))
+        mask_id = _raw.token_to_id("<mask>")
+        def tokenize_with_masks(text, max_len=None):
+            import re
+            parts = re.split(r'(\[MASK\])', text)
+            ids = [_raw.token_to_id("<bos>")]
+            for p in parts:
+                if p == "[MASK]":
+                    ids.append(mask_id)
+                elif p:
+                    ids.extend(_raw.encode(p, add_special_tokens=False).ids)
+            if max_len:
+                ids = ids[:max_len]
+            return ids
+        class _TokWrap:
+            def __init__(self, mask_id, vocab_size):
+                self.mask_token = "<mask>"
+                self.mask_token_id = mask_id
+                self.vocab_size = vocab_size
+                self.eos_token_id = _raw.token_to_id("<eos>")
+                self.sep_token_id = self.eos_token_id
+                self.cls_token_id = _raw.token_to_id("<bos>")
+                self.pad_token_id = _raw.token_to_id("<pad>")
+                self.bos_token_id = _raw.token_to_id("<bos>")
+            def encode(self, text, add_special_tokens=True, max_length=None, return_tensors=None):
+                ids = tokenize_with_masks(text, max_len=max_length)
+                if return_tensors == "pt":
+                    import torch
+                    return torch.tensor([ids], dtype=torch.long)
+                return ids
+            def __call__(self, text, add_special_tokens=False, return_tensors=None, max_length=None, truncation=False):
+                """Compatibility shim for AutoTokenizer call-style. Always returns a dict."""
+                ids = tokenize_with_masks(text, max_len=max_length if truncation else None)
+                return {"input_ids": ids}
+        tokenizer = _TokWrap(mask_id, _raw.get_vocab_size())
+    else:
+        from transformers import AutoTokenizer
+        tokenizer = AutoTokenizer.from_pretrained(encoder_name)
+        if tokenizer.mask_token is None:
+            tokenizer.mask_token = "<mask>"
+            tokenizer.mask_token_id = tokenizer.convert_tokens_to_ids("<mask>")
 
     # v5: smaller head_layers (1 instead of 2) since mmBERT is already deep.
     model = DecisionModel(encoder_name=encoder_name, head_layers=1)
@@ -246,7 +288,7 @@ def main():
                     if target.sum() == 0:
                         target[0] = 0.01
                     # v5: larger max_len to leverage 1024 ctx
-                    ids, markers = build_sequence(tokenizer, state, qdef, max_len=896, head_max_len=160)
+                    ids, markers = build_sequence(tokenizer, state, qdef, max_len=384, head_max_len=128)
                     if len(markers) < 2:
                         continue
                     rule_items.append((ids, markers))
@@ -285,16 +327,12 @@ def main():
                 log_probs = torch.log_softmax(logits, dim=-1)
                 probs = log_probs.exp()
 
-                # v4-style direct cross-entropy per marker (skip proper_reward for v5 speed)
+                # Use proper_reward: log_score + spherical + RPS
                 # target shape: (n_items, max_markers, 2)
-                # logits shape: (n_items, max_markers)
+                # probs shape: (n_items, max_markers)
                 # We treat marker dim as the "class" axis, same as v3/v4
-                # Just use the masked target's argmax as ground truth
-                gt = target_batch.argmax(-1)  # (n_items, max_markers)
-                loss_per_marker = -log_probs.gather(-1, gt.unsqueeze(-1)).squeeze(-1)
-                # zero out padding markers
-                loss_per_marker = loss_per_marker * m_float
-                loss = loss_per_marker.sum() / m_float.sum().clamp(min=1)
+                reward = proper_reward(probs, target_batch, qtype_batch, m_float)
+                loss = -reward.mean()
                 batch_loss = batch_loss + loss
                 n_items += 1
 
@@ -307,7 +345,7 @@ def main():
                 n_batches += 1
                 n += n_items
 
-            if n_batches % 50 == 0 and n_batches > 0:
+            if n_batches % 20 == 0 and n_batches > 0:
                 elapsed = time.time() - t0
                 rate = n / max(elapsed, 0.1)
                 eta = (len(sequences) * epochs - (epoch * len(sequences) + n)) / max(rate, 0.1)

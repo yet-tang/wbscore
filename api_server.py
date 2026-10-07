@@ -297,14 +297,49 @@ def root_redirect():
 _MODEL = None
 _TOKENIZER = None
 _MODEL_VERSION = None
+_LAYA_LOCAL = WORKSPACE.parent / "laya_checkpoints" / "multilingual"
+
+def _build_laya_tokenizer():
+    """Build a tokenizer shim compatible with build_sequence() for laya-multilingual."""
+    from tokenizers import Tokenizer as HFTokenizer
+    _raw = HFTokenizer.from_file(str(_LAYA_LOCAL / "tokenizer" / "tokenizer.json"))
+    mask_id = _raw.token_to_id("<mask>")
+    def tokenize_with_masks(text, max_len=None):
+        import re
+        parts = re.split(r'(\[MASK\])', text)
+        ids = [_raw.token_to_id("<bos>")]
+        for p in parts:
+            if p == "[MASK]":
+                ids.append(mask_id)
+            elif p:
+                ids.extend(_raw.encode(p, add_special_tokens=False).ids)
+        if max_len:
+            ids = ids[:max_len]
+        return ids
+    class _TokWrap:
+        mask_token = "<mask>"
+        mask_token_id = mask_id
+        vocab_size = _raw.get_vocab_size()
+        eos_token_id = _raw.token_to_id("<eos>")
+        sep_token_id = eos_token_id
+        cls_token_id = _raw.token_to_id("<bos>")
+        pad_token_id = _raw.token_to_id("<pad>")
+        bos_token_id = cls_token_id
+        def __call__(self, text, add_special_tokens=False, return_tensors=None,
+                     max_length=None, truncation=False):
+            ids = tokenize_with_masks(text, max_len=max_length if truncation else None)
+            return {"input_ids": ids}
+    return _TokWrap()
+
 def get_model():
-    """Load latest trained laya model + tokenizer. Prefers v2, falls back to v1.
+    """Load latest trained laya model + tokenizer. Prefers v5, falls back to v4/v3/v2/v1.
     Returns (model, tokenizer) or (None, None)."""
     global _MODEL, _TOKENIZER, _MODEL_VERSION
     if _MODEL is not None:
         return _MODEL, _TOKENIZER
-    # Try v4 first (class-balanced), then v3, then v2, then v1
+    # Try v5 first (laya-multilingual 322M, +6.5% vs v4), then v4 (rubert-tiny2), then v3, v2, v1
     candidates = [
+        WORKSPACE / "checkpoints" / "wb_laya_v5" / "wb_laya.pt",
         WORKSPACE / "checkpoints" / "wb_laya_v4" / "wb_laya.pt",
         WORKSPACE / "checkpoints" / "wb_laya_v3" / "wb_laya.pt",
         WORKSPACE / "checkpoints" / "wb_laya_v2" / "wb_laya.pt",
@@ -319,18 +354,26 @@ def get_model():
         return None, None
     try:
         import torch
-        from transformers import AutoTokenizer
         sys.path.insert(0, str(WORKSPACE))
         from laya_engine import DecisionModel, build_sequence, QTYPES
         import numpy as np
 
         ckpt = torch.load(ckpt_path, map_location="cpu")
         encoder_name = ckpt["encoder_name"]
-        tok = AutoTokenizer.from_pretrained(encoder_name)
-        if tok.mask_token is None:
-            tok.mask_token = "<mask>"
-            tok.mask_token_id = tok.convert_tokens_to_ids("<mask>")
-        m = DecisionModel(encoder_name=encoder_name)
+
+        # v5 uses laya-multilingual (tokenizers lib, not AutoTokenizer)
+        if "v5" in str(ckpt_path) or "laya-multilingual" in encoder_name or "multilingual" in encoder_name:
+            tok = _build_laya_tokenizer()
+            m = DecisionModel(encoder_name=encoder_name, head_layers=1)
+        else:
+            # v4/v3/v2/v1: rubert-tiny2 via AutoTokenizer
+            from transformers import AutoTokenizer
+            tok = AutoTokenizer.from_pretrained(encoder_name)
+            if tok.mask_token is None:
+                tok.mask_token = "<mask>"
+                tok.mask_token_id = tok.convert_tokens_to_ids("<mask>")
+            m = DecisionModel(encoder_name=encoder_name)
+
         m.load_state_dict(ckpt["model"])
         m.eval()
         _MODEL, _TOKENIZER = m, tok
